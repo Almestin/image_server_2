@@ -8,7 +8,7 @@ import json
 import logging
 import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from PIL import Image
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -107,28 +107,157 @@ def save_metadata(filename, original_name, size, file_type):
         conn.close()
 
 class ImageHandler(BaseHTTPRequestHandler):
+    def render_images_list(self, images, page, total_pages, total):
+        rows = ''
+        for img in images:
+            size_kb = round(img['size'] / 1024, 1)
+
+            filename_esc = img['filename'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            original_esc = img['original_name'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            upload_time_str = img['upload_time'].strftime('%Y-%m-%d %H:%M:%S')
+            rows += f'''
+                    <tr>
+                        <td><a href="/images/{filename_esc}">{filename_esc}</a></td>
+                        <td>{original_esc}</td>
+                        <td>{size_kb}</td>
+                        <td>{upload_time_str}</td>
+                        <td>{img['file_type']}</td>
+                        <td><button class="delete-btn" data-id="{img['id']}">Delete</button></td>
+                    </tr>
+                '''
+
+        pagination = ''
+        if page > 1:
+            pagination += f'<a href="/images-list?page={page - 1}">← Next</a> '
+        else:
+            pagination += '<span class="disabled">← Previous</span> '
+
+        pagination += f'<span>Page {page} из {total_pages}</span> '
+
+        if page < total_pages:
+            pagination += f'<a href="/images-list?page={page + 1}">Next →</a>'
+        else:
+            pagination += '<span class="disabled">Next →</span>'
+
+        html = f'''<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>List of images</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            table {{ border-collapse: collapse; width: 100%; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+            th {{ background-color: #f2f2f2; }}
+            .delete-btn {{ background-color: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }}
+            .pagination {{ margin: 20px 0; }}
+            .pagination a, .pagination span {{ display: inline-block; padding: 5px 10px; margin: 0 2px; border: 1px solid #ccc; text-decoration: none; color: #333; }}
+            .disabled {{ color: #aaa; background: #eee; pointer-events: none; }}
+        </style>
+    </head>
+    <body>
+        <h1>Downloaded images</h1>
+        {f'<p>Total: {total}</p>' if total > 0 else ''}
+        {f'<table><thead><tr><th>Name</th><th>Original name</th><th>Size (КB)</th><th>Date</th><th>Type</th><th>Action</th></tr></thead><tbody>{rows}</tbody></table>' if images else '<p>No images uploaded</p>'}
+        <div class="pagination">{pagination}</div>
+        <br>
+        <a href="/">Return to upload</a>
+        <script>
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {{
+                btn.addEventListener('click', async () => {{
+                    const id = btn.dataset.id;
+                    if(confirm('Delete this image?')) {{
+                        const resp = await fetch(`/delete/${{id}}`, {{ method: 'POST' }});
+                        if(resp.ok) window.location.reload();
+                        else alert('Mistake!');
+                    }}
+                }});
+            }});
+        </script>
+    </body>
+    </html>'''
+        return html
+
+    def serve_image(self, filename):
+
+        safe_filename = os.path.basename(filename)
+        filepath = os.path.join(UPLOAD_DIR, safe_filename)
+        if not os.path.exists(filepath):
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Image not found")
+            return
+
+        ext = safe_filename.split('.')[-1].lower()
+        mime = 'image/jpeg' if ext in ('jpg', 'jpeg') else 'image/png' if ext == 'png' else 'image/gif'
+        self.send_response(200)
+        self.send_header("Content-Type", mime)
+        self.end_headers()
+        with open(filepath, 'rb') as f:
+            self.wfile.write(f.read())
 
     def log_message(self, format, *args):
         logger.info(f"Request: {format % args}")
 
     def do_GET(self):
         parsed_path = urlparse(self.path)
-        if parsed_path.path == "/":
+        path = parsed_path.path
+        query = parse_qs(parsed_path.query)
+
+        if path == "/":
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b"Welcome to Image Hosting. Use POST /upload.")
+            self.wfile.write(b"Welcome to Image Hosting. Use POST /upload or visit /images-list")
+        elif path == "/images-list":
+            self.handle_images_list(query)
+        elif path.startswith("/images/"):
+            # Извлекаем имя файла (обрезаем /images/)
+            filename = path[8:]
+            self.serve_image(filename)
         else:
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b"Not Found")
 
-    def _send_error(self, code, message):
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+    def handle_images_list(self, query):
+        # Получаем номер страницы, по умолчанию 1
+        try:
+            page = int(query.get('page', ['1'])[0])
+        except:
+            page = 1
+        if page < 1:
+            page = 1
+        per_page = 10
+        offset = (page - 1) * per_page
+
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT COUNT(*) as count FROM images")
+        total = cursor.fetchone()['count']
+
+        cursor.execute("""
+            SELECT id, filename, original_name, size, upload_time, file_type
+            FROM images
+            ORDER BY upload_time DESC
+            LIMIT %s OFFSET %s
+        """, (per_page, offset))
+        images = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+        html = self.render_images_list(images, page, total_pages, total)
+        self.send_html_response(html)
+
+    def send_html_response(self, html):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        error_body = json.dumps({"status": "error", "message": message}, ensure_ascii=False)
-        self.wfile.write(error_body.encode('utf-8'))
+        self.wfile.write(html.encode('utf-8'))
 
 
     def do_POST(self):
@@ -158,6 +287,8 @@ class ImageHandler(BaseHTTPRequestHandler):
         boundary = match.group(1).encode('utf-8')
         # add prefix
         boundary = b'--' + boundary
+
+
 
         try:
             # read request
