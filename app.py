@@ -10,12 +10,51 @@ import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 from PIL import Image
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 MAX_FILE_SIZE = 5 * 1024 * 1024   # 5 МБ
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 UPLOAD_DIR = "/images"
 LOG_FILE = "/logs/app.log"
+DB_HOST = os.environ.get('DB_HOST', 'db')
+DB_PORT = os.environ.get('DB_PORT', '5432')
+DB_NAME = os.environ.get('DB_NAME', 'images_db')
+DB_USER = os.environ.get('DB_USER', 'postgres')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', 'secretpass')
+
+def get_db_connection():
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD
+    )
+    return conn
+
+# new table
+def init_db():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS images (
+                id SERIAL PRIMARY KEY,
+                filename TEXT NOT NULL UNIQUE,
+                original_name TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                file_type TEXT NOT NULL
+            )
+        ''')
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info("Database table 'images' initialized")
+    except Exception as e:
+        logger.error(f"DB init failed: {e}")
 
 def is_allowed_file(filename):
     ext = '.' + filename.lower().split('.')[-1] if '.' in filename else ''
@@ -49,6 +88,23 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+def save_metadata(filename, original_name, size, file_type):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO images (filename, original_name, size, file_type)
+            VALUES (%s, %s, %s, %s)
+        """, (filename, original_name, size, file_type))
+        conn.commit()
+        logger.info(f"Metadata saved for {filename}")
+    except Exception as e:
+        logger.error(f"Failed to save metadata for {filename}: {e}")
+        raise  # пробросим выше, чтобы удалить файл
+    finally:
+        cursor.close()
+        conn.close()
 
 class ImageHandler(BaseHTTPRequestHandler):
 
@@ -167,6 +223,17 @@ class ImageHandler(BaseHTTPRequestHandler):
 
             logger.info(f"Success: image {unique_name} uploaded (original: {original_filename})")
 
+            try:
+                save_metadata(unique_name, original_filename, len(file_data), original_filename.split('.')[-1].lower())
+            except Exception as db_err:
+                # if mistake – del file
+                os.remove(save_path)
+                logger.error(f"DB error, file {unique_name} deleted: {db_err}")
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(b"Database error, upload failed")
+                return
+
             #  JSON  responce
             image_url = f"http://localhost:8080/images/{unique_name}"
 
@@ -191,6 +258,8 @@ class ImageHandler(BaseHTTPRequestHandler):
 def run_server():
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    os.makedirs('/backups', exist_ok=True)  # для бекапов
+    init_db()
     server_address = ('0.0.0.0', 8000)
     httpd = HTTPServer(server_address, ImageHandler)
     logger.info("Starting HTTP server on port 8000")
