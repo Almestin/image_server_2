@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15
+    container_name: image_db
+    environment:
+      POSTGRES_DB: images_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    restart: unless-stopped
+
   app:
     build: .
     container_name: image_app
@@ -9,8 +24,16 @@ services:
     volumes:
       - images:/images
       - logs:/logs
+      - backups:/backups
     environment:
       - PYTHONUNBUFFERED=1
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=images_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secretpass
+    depends_on:
+      - db
     networks:
       - internal
     restart: unless-stopped
@@ -24,7 +47,6 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - images:/usr/share/nginx/html/images:ro
       - ./static:/usr/share/nginx/html/static:ro
-      - ./static:/usr/share/nginx/html/static:ro
     depends_on:
       - app
     networks:
@@ -34,6 +56,8 @@ services:
 volumes:
   images:
   logs:
+  backups:
+  db_data:
 
 networks:
   internal:
