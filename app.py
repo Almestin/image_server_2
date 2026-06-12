@@ -12,6 +12,22 @@ from urllib.parse import urlparse, parse_qs
 from PIL import Image
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import subprocess
+from datetime import datetime
+import time
+
+def wait_for_db(max_retries=30, delay=1):
+
+    for i in range(max_retries):
+        try:
+            conn = get_db_connection()
+            conn.close()
+            logger.info("Database is ready")
+            return True
+        except Exception as e:
+            logger.warning(f"Waiting for DB... ({i+1}/{max_retries})")
+            time.sleep(delay)
+    raise Exception("Database not ready after retries")
 
 
 MAX_FILE_SIZE = 5 * 1024 * 1024   # 5 МБ
@@ -55,6 +71,31 @@ def init_db():
         logger.info("Database table 'images' initialized")
     except Exception as e:
         logger.error(f"DB init failed: {e}")
+
+
+def create_backup():
+
+    backup_dir = '/backups'
+    os.makedirs(backup_dir, exist_ok=True)
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    backup_file = os.path.join(backup_dir, f'backup_{timestamp}.sql')
+
+    env = os.environ.copy()
+    env['PGPASSWORD'] = DB_PASSWORD  # пароль для pg_dump
+
+    cmd = [
+        'pg_dump',
+        '-h', DB_HOST,
+        '-p', DB_PORT,
+        '-U', DB_USER,
+        '-d', DB_NAME,
+        '-f', backup_file
+    ]
+    try:
+        subprocess.run(cmd, env=env, check=True, capture_output=True, text=True)
+        logger.info(f"Backup created: {backup_file}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Backup failed: {e.stderr}")
 
 def is_allowed_file(filename):
     ext = '.' + filename.lower().split('.')[-1] if '.' in filename else ''
@@ -161,7 +202,7 @@ class ImageHandler(BaseHTTPRequestHandler):
         {f'<table><thead><tr><th>Name</th><th>Original name</th><th>Size (КB)</th><th>Date</th><th>Type</th><th>Action</th></tr></thead><tbody>{rows}</tbody></table>' if images else '<p>No images uploaded</p>'}
         <div class="pagination">{pagination}</div>
         <br>
-        <a href="/">Return to upload</a>
+        <a href="/upload">Return to upload</a>
         <script>
             
             document.querySelectorAll('.delete-btn').forEach(btn => {{
@@ -433,6 +474,11 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
 
+            try:
+                create_backup()
+            except Exception as e:
+                logger.error(f"Backup after upload failed: {e}")
+
         except Exception as e:
             logger.error(f"Upload error: {str(e)}", exc_info=True)
             self.send_response(500)
@@ -442,8 +488,15 @@ class ImageHandler(BaseHTTPRequestHandler):
 def run_server():
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    os.makedirs('/backups', exist_ok=True)  # для бекапов
+    os.makedirs('/backups', exist_ok=True)
+    wait_for_db()
     init_db()
+    existing_backups = [f for f in os.listdir('/backups') if f.endswith('.sql')]
+    if not existing_backups:
+        logger.info("No backups found, creating initial backup...")
+        create_backup()
+    else:
+        logger.info(f"Found {len(existing_backups)} existing backup(s), skipping initial backup")
     server_address = ('0.0.0.0', 8000)
     httpd = HTTPServer(server_address, ImageHandler)
     logger.info("Starting HTTP server on port 8000")

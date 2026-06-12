@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Switch to Images tab
     if (imagesButton) {
         imagesButton.addEventListener('click', () => {
-            window.location.href = 'images.html';
+            window.location.href = '/images-list';
         });
     }
 
