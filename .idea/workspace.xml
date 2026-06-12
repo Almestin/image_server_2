@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Adding an /images-list page with pagination">
+    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Implemented image deletion">
+      <change afterPath="$PROJECT_DIR$/backup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -90,7 +97,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781201128058</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Implemented image deletion">
+      <option name="closed" value="true" />
+      <created>1781263885500</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1781263885500</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -98,6 +113,7 @@
     <MESSAGE value="Setting up parameters, adding a database" />
     <MESSAGE value="Added connection to the database, creation of the images table at startup, and saving of metadata after successful file writing." />
     <MESSAGE value="Adding an /images-list page with pagination" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding an /images-list page with pagination" />
+    <MESSAGE value="Implemented image deletion" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implemented image deletion" />
   </component>
 </project>
