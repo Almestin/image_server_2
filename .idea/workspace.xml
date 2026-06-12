@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Added connection to the database, creation of the images table at startup, and saving of metadata after successful file writing.">
+    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Adding an /images-list page with pagination">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/nginx.conf" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,13 +82,22 @@
       <option name="project" value="LOCAL" />
       <updated>1781189911375</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Adding an /images-list page with pagination">
+      <option name="closed" value="true" />
+      <created>1781201128058</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1781201128058</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Starting a new project based on image_server." />
     <MESSAGE value="Setting up parameters, adding a database" />
     <MESSAGE value="Added connection to the database, creation of the images table at startup, and saving of metadata after successful file writing." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added connection to the database, creation of the images table at startup, and saving of metadata after successful file writing." />
+    <MESSAGE value="Adding an /images-list page with pagination" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding an /images-list page with pagination" />
   </component>
 </project>

@@ -259,10 +259,63 @@ class ImageHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html.encode('utf-8'))
 
+    def handle_delete(self, id_str):
+        try:
+            image_id = int(id_str)
+        except ValueError:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Invalid image ID")
+            return
+
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # get name
+        cursor.execute("SELECT filename FROM images WHERE id = %s", (image_id,))
+        row = cursor.fetchone()
+        if not row:
+            cursor.close()
+            conn.close()
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Image not found in database")
+            return
+
+        filename = row['filename']
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        # del file
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted file: {file_path}")
+            except Exception as e:
+                logger.error(f"Failed to delete file {file_path}: {e}")
+        else:
+            logger.warning(f"File {file_path} not found on disk, but DB record will be deleted")
+
+        # del record from db
+        cursor.execute("DELETE FROM images WHERE id = %s", (image_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info(f"Deleted DB record for image id {image_id}")
+
+        # return to list
+        self.send_response(303)
+        self.send_header('Location', '/images-list')
+        self.end_headers()
 
     def do_POST(self):
         parsed_path = urlparse(self.path)
-        if parsed_path.path != "/upload":
+        path = parsed_path.path
+
+        if path.startswith('/delete/'):
+            self.handle_delete(path[8:])
+            return
+
+        if path != "/upload":
             self.send_response(404)
             self.end_headers()
             return
