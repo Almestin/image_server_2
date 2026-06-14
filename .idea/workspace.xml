@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Added the ability to backup the database">
+    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="bug fixes">
+      <change afterPath="$PROJECT_DIR$/app1.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/backup.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/constants.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/db.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/file_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/image_handler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utilities/logging_config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/images/1780599700_860d4b13.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images/1780600166_92b87a9d.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images/1780602878_d92486e6.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images/1780603164_90e9adae.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images/1780603832_e22d6d00.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/app.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/app.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/nginx.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/form/images.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/form/upload.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/form/upload.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/image-uploader/js/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/image-uploader/js/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/image-uploader/js/upload.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/image-uploader/js/upload.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781280489751</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="bug fixes">
+      <option name="closed" value="true" />
+      <created>1781302235581</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1781302235581</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -144,6 +148,7 @@
     <MESSAGE value="Adding an /images-list page with pagination" />
     <MESSAGE value="Implemented image deletion" />
     <MESSAGE value="Added the ability to backup the database" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added the ability to backup the database" />
+    <MESSAGE value="bug fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="bug fixes" />
   </component>
 </project>
