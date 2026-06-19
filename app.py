@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os
+import threading
+import time
 from http.server import HTTPServer
+
 
 from utilities.constants import UPLOAD_DIR, LOG_FILE
 from utilities.logging_config import logger
@@ -20,6 +23,15 @@ def run_server():
     wait_for_db()
     init_db()
 
+    def backup_scheduler():
+        while True:
+            time.sleep(43200)  # 12 hours
+            create_backup()
+
+    backup_thread = threading.Thread(target=backup_scheduler, daemon=True)
+    backup_thread.start()
+    logger.info("Scheduled backups every 12 hours")
+
     # Create initial backup if none exists
     existing_backups = [f for f in os.listdir('/backups') if f.endswith('.sql')]
     if not existing_backups:
@@ -27,6 +39,7 @@ def run_server():
         create_backup()
     else:
         logger.info(f"Found {len(existing_backups)} existing backup(s), skipping initial backup")
+
 
     server_address = ('0.0.0.0', 8000)
     httpd = HTTPServer(server_address, ImageHandler)

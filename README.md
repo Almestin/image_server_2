@@ -61,7 +61,7 @@ After successful start you will see logs from all three containers (`db`, `app`,
 Press `Ctrl+C` in the terminal where the project is running, or execute:
 
 ```bash
-docker compose down
+docker compose down 
 ```
 
 ### Run in background

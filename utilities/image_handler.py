@@ -132,7 +132,7 @@ class ImageHandler(BaseHTTPRequestHandler):
                 btn.addEventListener('click', async () => {{
                     const id = btn.dataset.id;
                     if(confirm('Delete this image?')) {{
-                        const resp = await fetch(`/delete/${{id}}`, {{ method: 'POST' }});
+                        const resp = await fetch('/delete/' + id, {{ method: 'DELETE' }});
                         if(resp.ok) window.location.reload();
                         else alert('Error!');
                     }}
@@ -185,10 +185,7 @@ class ImageHandler(BaseHTTPRequestHandler):
         self.send_response(303)
         self.send_header('Location', '/images-list')
         self.end_headers()
-        try:
-            create_backup()
-        except Exception as e:
-            logger.error(f"Backup after delete failed: {e}")
+
 
     def do_GET(self):
         """Process GET requests."""
@@ -214,10 +211,6 @@ class ImageHandler(BaseHTTPRequestHandler):
         """Process POST requests: /upload and /delete/<id>."""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
-
-        if path.startswith('/delete/'):
-            self.handle_delete(path[8:])
-            return
 
         if path != "/upload":
             self.send_response(404)
@@ -323,3 +316,14 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b"Internal server error")
+
+    def do_DELETE(self):
+        """Process DELETE requests: /delete/<id>"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        if path.startswith('/delete/'):
+            self.handle_delete(path[8:])
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Not Found")
