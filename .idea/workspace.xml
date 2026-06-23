@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="Deleted old and service files">
+    <list default="true" id="4904956e-0271-424d-89aa-ad35b34520c0" name="Changes" comment="The first change is to create backups on a schedule, such as twice a day, rather than for every action. The second change is to implement deletions via DELETE rather than POST.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilities/image_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/image_handler.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,7 +151,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781480703964</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="The first change is to create backups on a schedule, such as twice a day, rather than for every action. The second change is to implement deletions via DELETE rather than POST.">
+      <option name="closed" value="true" />
+      <created>1781907293961</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1781907293961</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -170,6 +176,7 @@
     <MESSAGE value="Refactoring app.py" />
     <MESSAGE value="Added README.md." />
     <MESSAGE value="Deleted old and service files" />
-    <option name="LAST_COMMIT_MESSAGE" value="Deleted old and service files" />
+    <MESSAGE value="The first change is to create backups on a schedule, such as twice a day, rather than for every action. The second change is to implement deletions via DELETE rather than POST." />
+    <option name="LAST_COMMIT_MESSAGE" value="The first change is to create backups on a schedule, such as twice a day, rather than for every action. The second change is to implement deletions via DELETE rather than POST." />
   </component>
 </project>

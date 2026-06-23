@@ -1,5 +1,5 @@
 # Image Hosting Service 2.0  
-*Image server with PostgreSQL support, pagination, deletion, and automatic backup*
+*Image server with PostgreSQL support, pagination, deletion, and automatic scheduled backup*
 
 ---
 
@@ -61,7 +61,7 @@ After successful start you will see logs from all three containers (`db`, `app`,
 Press `Ctrl+C` in the terminal where the project is running, or execute:
 
 ```bash
-docker compose down 
+docker compose down
 ```
 
 ### Run in background
@@ -129,7 +129,6 @@ Uploads an image.
 After successful upload:
 - The file is saved to the `images/` folder (on the host).
 - Metadata is written to the `images` table in PostgreSQL.
-- A database backup is automatically created in the `backups/` folder.
 
 #### `GET /images-list`
 Returns an HTML page with a table of all images.  
@@ -137,11 +136,10 @@ Returns an HTML page with a table of all images.
 Pagination: 10 records per page.  
 Table columns: file name (link), original name, size (KB), upload time, type, Delete button.
 
-#### `POST /delete/<id>`
-Deletes the image by its database ID.  
+#### `DELETE /delete/<id>`
+Deletes the image by its database ID using the HTTP DELETE method.  
 - Removes the physical file from the `images/` folder.
 - Removes the record from PostgreSQL.
-- Creates a new backup.
 - Redirects back to `/images-list`.
 
 #### `GET /images/<filename>`
@@ -150,9 +148,9 @@ Example: `http://localhost:8080/images/1706123456_abc12345.jpg`
 
 ### Backup and Restore
 
-- **Automatic**: A backup is created on server startup (if no `.sql` files exist), after each successful upload, and after each deletion. Files are saved in `backups/` with name `backup_YYYY-MM-DD_HHMMSS.sql`.
+- **Scheduled**: A backup is created automatically **every 12 hours** (twice a day) by a background thread. The initial backup is created on server startup if no `.sql` files exist. Backups are saved in `backups/` with name `backup_YYYY-MM-DD_HHMMSS.sql`.
 
-- **Manual backup**:
+- **Manual backup** (can be triggered at any time):
   ```bash
   docker compose exec app python -c "from utilities.backup import create_backup; create_backup()"
   ```
@@ -177,7 +175,7 @@ Example: `http://localhost:8080/images/1706123456_abc12345.jpg`
 
 - **Main page (`/`)** – random banner from five images; button leads to upload form.
 - **Upload page (`/upload`)** – file selection via button or drag & drop; after success displays the image link and a COPY button.
-- **Images list page (`/images-list`)** – table with pagination; each row has a "Delete" button that sends a POST request to the server and reloads the list.
+- **Images list page (`/images-list`)** – table with pagination; each row has a "Delete" button that sends a `DELETE` request to the server and reloads the list.
 
 ---
 
@@ -189,8 +187,8 @@ Example: `http://localhost:8080/images/1706123456_abc12345.jpg`
 4. After each upload, check that files appear in the `images/` folder on the host and records in the database:  
    `docker compose exec db psql -U postgres -d images_db -c "SELECT * FROM images;"`
 5. Go to `/images-list` – the table should appear with pagination (if >10 images). Test navigation between pages.
-6. Click "Delete" on any image – it should disappear from the table and the file from `images/`.
-7. Ensure that after deletion a new `.sql` file appears in the `backups/` folder.
+6. Click "Delete" on any image – it should disappear from the table and the file from `images/`. The request should be sent with the `DELETE` method.
+7. **Backup verification**: Wait up to 12 hours (or check the logs) to confirm that a scheduled backup is created in the `backups/` folder. You can also trigger a manual backup using the command above.
 8. Test error handling: upload a text file renamed to `.jpg` – you should get the message "File content is not a valid image".
 
 ---
@@ -202,7 +200,7 @@ Example: `http://localhost:8080/images/1706123456_abc12345.jpg`
 | Ports 8000, 8080 or 5432 already in use | Stop other services or change ports in `docker-compose.yml` |
 | Upload fails with 502 Bad Gateway | Check that the `app` container is running: `docker compose ps app`. View logs: `docker compose logs app` |
 | `/images-list` is empty even after upload | Make sure you uploaded files **after** adding PostgreSQL. Old images (from earlier versions) are not in the database. Upload a new image. |
-| Backups are not created | Verify that `pg_dump` is installed in the `app` container: `docker compose exec app which pg_dump`. If missing, add `postgresql-client` to `Dockerfile` and rebuild. |
+| Backups are not created | Verify that `pg_dump` is installed in the `app` container: `docker compose exec app which pg_dump`. If missing, add `postgresql-client` to `Dockerfile` and rebuild. Also check that the scheduler thread is running – look for `Scheduled backups every 12 hours` in the logs. |
 | Nginx fails to start with `proxy_pass` error | Check `nginx.conf` syntax. Do not place `proxy_pass` inside a `location` with an `if` block without proper wrapping. Use the provided `nginx.conf`. |
 | Circular import error in Python | Ensure the `utilities/` structure exactly matches the description. Files `db.py`, `file_utils.py`, `backup.py` must not import from `app.py`. |
 
@@ -224,10 +222,13 @@ These are set in `docker-compose.yml`. If you change them, keep consistency with
 
 ## 9. Notes for Developers
 
+- All comments in the source code are written in **English**.
 - The code is split into logical modules inside the `utilities/` folder for easy maintenance.
 - Database access uses `psycopg2` with `RealDictCursor`.
 - Static files are served by Nginx; dynamic routes are proxied to the Python backend.
 - Uploaded images, logs and backups are available on the host via bind mounts (`images/`, `logs/`, `backups/`). PostgreSQL data is stored in a named volume `db_data`.
+- The deletion endpoint now uses the HTTP `DELETE` method instead of `POST`.
+- Backups are created automatically every 12 hours (via a background thread). Manual backup is still available.
 
 ---
 
